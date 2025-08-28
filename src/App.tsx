@@ -58,7 +58,7 @@ export default function App() {
   const rearBar = toBar(rearPsi);
 
   return (
-    <main className="min-h-dvh bg-slate-50 text-slate-900 p-6 transition-colors dark:bg-slate-950 dark:text-slate-100">
+<main className="min-h-dvh bg-slate-50 text-slate-900 p-6 transition-colors dark:bg-slate-950 dark:text-slate-100 mx-auto w-full max-w-screen-xl">
       <section className="mx-auto max-w-6xl">
         <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
