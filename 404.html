@@ -1,0 +1,19 @@
+<!-- public/404.html -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      (function () {
+        var repo = '/cycling-tire-pressure-calculator'; // your Vite base
+        var l = window.location;
+        // Store the original path/query/hash (minus the repo prefix)
+        sessionStorage.setItem('redirect', l.pathname.replace(repo, '') + l.search + l.hash);
+        // Go back to your app's root so it can restore the route
+        l.replace(repo + '/');
+      })();
+    </script>
+    <noscript>This site requires JavaScript.</noscript>
+  </head>
+  <body></body>
+</html>
