@@ -1,5 +1,5 @@
 // VALUES (runtime)
-import { SPEEDS, SURFACES, TIRE_TYPES, PSI_PER_BAR } from '../constants';
+import { PSI_PER_BAR } from '../constants';
 // TYPES (erased at build time)
 import type { Surface, Speed, TireType, WheelDiameter } from '../constants';
 

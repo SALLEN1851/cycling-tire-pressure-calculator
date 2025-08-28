@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import InputsForm from './components/InputsForm';
 import ResultCard from './components/ResultCard';
-import { PRESETS, PSI_PER_BAR, WEIGHT_SPLITS } from "./constants";
+import { PRESETS, WEIGHT_SPLITS } from "./constants";
 import type { Preset, Surface, Speed, TireType, WheelDiameter } from "./constants";
 import { computeWheelPsi, toBar } from './lib/calc';
 import { getQuery, setQuery } from './lib/urlState';
 
 export default function App() {
   // Theme toggle (Tailwind uses the `dark` class on <html>)
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => (getQuery('theme') as 'dark' | 'light') || 'dark');
+  const [theme] = useState<'dark' | 'light'>(() => (getQuery('theme') as 'dark' | 'light') || 'dark');
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') root.classList.add('dark');

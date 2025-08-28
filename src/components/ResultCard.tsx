@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function ResultCard({ title, psi, bar }: { title: string; psi: number; bar: number }) {
   return (
