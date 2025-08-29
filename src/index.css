@@ -18,6 +18,14 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: unset;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -29,7 +37,7 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
+  display: block;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;

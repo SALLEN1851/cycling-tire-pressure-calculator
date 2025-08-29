@@ -5,6 +5,7 @@ import { PRESETS, WEIGHT_SPLITS } from "./constants";
 import type { Preset, Surface, Speed, TireType, WheelDiameter } from "./constants";
 import { computeWheelPsi, toBar } from './lib/calc';
 import { getQuery, setQuery } from './lib/urlState';
+import { recommendPressures } from "./utils/pressureComp";
 
 export default function App() {
   // Theme toggle (Tailwind uses the `dark` class on <html>)
@@ -26,6 +27,18 @@ export default function App() {
   const [speed, setSpeed] = useState<Speed>(() => (getQuery('speed') as any) || 'Moderate Group Ride');
   const [splitLabel, setSplitLabel] = useState<string>(() => getQuery('split') || '48/52 (Road Bikes)');
   const [presetName, setPresetName] = useState<string>(() => getQuery('preset') || '');
+
+    // NEW: weather/elevation-adjusted results
+  const [wx, setWx] = useState<{
+    ambientTempC: number;
+    elevationM: number;
+    ambientPressurePsi: number;
+    frontPsiAdj: number;
+    rearPsiAdj: number;
+    note: string;
+  } | null>(null);
+  const [wxError, setWxError] = useState<string | null>(null);
+  const [wxLoading, setWxLoading] = useState(false);
 
   // Persist to URL when inputs change
   useEffect(() => {
@@ -54,12 +67,63 @@ export default function App() {
     return { frontPsi: Math.round(f), rearPsi: Math.round(r) };
   }, [weightLbs, split, tireWidthMm, surface, speed, tireType, wheelDiameter]);
 
+    // NEW: call weather/elevation compensation whenever baseline pressures or key inputs change
+  useEffect(() => {
+    let cancelled = false;
+
+    async function updateWithWeather() {
+      try {
+        setWxLoading(true);
+        setWxError(null);
+
+// Use your baseline (gauge) targets at a reference temp (20 °C)
+        const result = await recommendPressures({
+          frontPsiRef: frontPsi,
+          rearPsiRef: rearPsi,
+          refTempC: 20,
+          keepAbsoluteConstant: false, // typical cycling approach
+          // coords: { lat: 39.77, lon: -86.16 }, // optional: pass fixed coords; otherwise uses geolocation()
+          when: new Date()
+        });
+
+        if (cancelled) return;
+
+        setWx({
+          ambientTempC: result.ambientTempC,
+          elevationM: result.elevationM,
+          ambientPressurePsi: result.ambientPressurePsi,
+          frontPsiAdj: result.front.psi,
+          rearPsiAdj: result.rear.psi,
+          note: result.front.note
+        });
+      } catch (e: any) {
+        if (cancelled) return;
+        setWx(null);
+        setWxError(e?.message ?? 'Weather adjustment failed');
+      } finally {
+        if (!cancelled) setWxLoading(false);
+      }
+    }
+
+       // Only attempt if weight is sane and we have baseline psi
+    if (weightValid && frontPsi > 0 && rearPsi > 0) {
+      updateWithWeather();
+    } else {
+      setWx(null);
+    }
+
+    return () => { cancelled = true; };
+  }, [
+    // dependencies that impact baseline psi or conditions:
+    frontPsi, rearPsi, weightValid, tireWidthMm, surface, speed, tireType, wheelDiameter
+  ]);
+
   const frontBar = toBar(frontPsi);
   const rearBar = toBar(rearPsi);
 
   return (
-<main className="min-h-dvh bg-slate-50 text-slate-900 p-6 transition-colors dark:bg-slate-950 dark:text-slate-100 mx-auto w-full max-w-screen-xl">
-      <section className="mx-auto max-w-6xl">
+<main className="min-h-dvh bg-slate-50 text-slate-900 p-6 transition-colors dark:bg-slate-950 dark:text-slate-100">
+      <section className="mx-auto w-full max-w-[1800px] px-6 sm:px-8">
         <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Cycling Tire Pressure Calculator</h1>
@@ -89,6 +153,31 @@ export default function App() {
           <div className="grid grid-cols-1 gap-6">
             <ResultCard title="Front Tire" psi={frontPsi} bar={frontBar} />
             <ResultCard title="Rear Tire" psi={rearPsi} bar={rearBar} />
+             {/* NEW: Weather-adjusted display (optional card) */}
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-4">
+              <h3 className="font-semibold">Weather & Elevation Adjustment</h3>
+              {wxLoading && <p className="text-sm mt-2">Fetching local temperature & elevation…</p>}
+              {wxError && <p className="text-sm mt-2 text-rose-600">{wxError}</p>}
+              {wx && !wxLoading && (
+                <>
+                  <p className="text-sm mt-2">
+                    Ambient <strong>{wx.ambientTempC.toFixed(1)}°C</strong> · Elevation <strong>{Math.round(wx.elevationM)} m</strong> ·
+                    Ambient Pressure <strong>{wx.ambientPressurePsi.toFixed(2)} psi</strong>
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3">
+                      <div className="text-xs uppercase tracking-wide text-slate-500">Front (adjusted)</div>
+                      <div className="text-lg font-semibold">{wx.frontPsiAdj.toFixed(1)} psi</div>
+                    </div>
+                    <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3">
+                      <div className="text-xs uppercase tracking-wide text-slate-500">Rear (adjusted)</div>
+                      <div className="text-lg font-semibold">{wx.rearPsiAdj.toFixed(1)} psi</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">{wx.note}</p>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>
