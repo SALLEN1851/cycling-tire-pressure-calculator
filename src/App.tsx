@@ -6,6 +6,8 @@ import type { Preset, Surface, Speed, TireType, WheelDiameter } from "./constant
 import { computeWheelPsi, toBar } from './lib/calc';
 import { getQuery, setQuery } from './lib/urlState';
 import { recommendPressures } from "./utils/pressureComp";
+import WindCard from './components/WindCard';
+import BestWindDirection, { recommendHeadings } from "./components/BestWindDirection";
 
 export default function App() {
   // Theme toggle (Tailwind uses the `dark` class on <html>)
@@ -178,6 +180,13 @@ export default function App() {
                 </>
               )}
             </div>
+            {/* Wind card — geolocates by default; pass coords if you want fixed location */}
+            <WindCard
+              // coords={{ lat: 39.77, lon: -86.16 }} // optional: fixed coords
+              unit="mph"
+              // routeHeadingDeg={90} // optional: show head/tail/crosswind for an eastbound route
+            />
+            <BestWindDirection windFromDeg={270} windSpeed={12} unitsLabel="mph" />
           </div>
         </div>
       </section>
